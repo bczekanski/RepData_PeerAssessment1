@@ -1,25 +1,105 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "activity"
+author: "Ben Czekanski"
+date: "March 6, 2016"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(gridExtra)
+library(knitr)
+```
 
-## Loading and preprocessing the data
+```{r}
+activity <- read.csv("activity.csv")
+activity2 <- activity[(is.na(activity$steps) == FALSE) ,]
+activity2$date <- ymd(activity2$date)
+activity2$date <- as.Date(activity2$date)
+```
+
+```{r}
+total.steps = sum(activity2$steps)
+hist(activity2$steps, xlab = "Steps", main = "Steps Histogram")
+mean.steps = mean(activity2$steps)
+median.steps = median(activity2$steps)
+```
+
+The total number of steps is `r total.steps`.
+The mean number of steps is `r mean.steps`, and the median number of steps is `r median.steps`.
+
+```{r}
+activity2 %>%
+  group_by(interval) %>%
+  summarize(time.steps = mean(steps)) -> time.steps
+time.steps %>%
+  ggplot(aes(interval, time.steps)) +
+    geom_line() +
+    ylab("Steps")
+```
+
+```{r}
+activity2 %>%
+  group_by(interval) %>%
+  summarize(avg_steps = mean(steps)) %>%
+  arrange(desc(avg_steps)) %>%
+  head(1) -> peak.int
+ peak_int = peak.int$interval
+ peak_steps = peak.int$avg_steps
+```
+The 5-minute interval that on average contains the most steps is interval `r peak_int`, and the number of steps on average is `r peak_steps`.
+```{r}
+activity %>%
+  filter(is.na(steps) == TRUE) %>%
+  summarize(steps_na = n()) %>%
+  head(1) -> steps.na
+```
+The total number of rows with NAs is `r steps.na`.
+```{r}
+activity2 %>%
+  group_by (date) %>%
+  summarize(new.steps = mean(steps)) %>%
+  head(100) -> new.steps
+```
+The missing data will be filled in by the average number of steps.
+
+STILL NEEDS TO BE DONE
+
+```{r}
+activity$steps[which(is.na(activity$steps))] <- mean(activity$steps, na.rm =TRUE)
+hist(activity$steps, xlab = "Steps", main = "Steps Histogram")
+mean.steps1 = mean(activity$steps)
+median.steps1 = median(activity$steps)
+total.steps1 = sum(activity$steps)
+```
+The total number of steps is `r total.steps1`.
+The mean number of steps is `r mean.steps1`, and the median number of steps is `r median.steps1`. The mean and median are the same as before but the totalnumber of steps is larger.
 
 
+```{r}
+activity %>%
+  mutate(date = as.Date(date)) %>%
+  mutate(day = weekdays(date)) %>%
+  mutate(day == c("Saturday", "Sunday")) -> new
 
-## What is mean total number of steps taken per day?
+new %>%
+  mutate(weekend = (day == c("Saturday", "Sunday"))) -> new
+  
+  w_end <- new[new$weekend == TRUE,]
+  w_days <- new[new$weekend == FALSE,]
 
+  w_end %>%
+    ggplot(aes(interval, steps)) + geom_line() + ggtitle("Weekends")-> p1
+  w_days %>%
+    ggplot(aes(interval, steps)) + geom_line() + ggtitle("Weekdays")-> p2
 
+grid.arrange(p1, p2, nrow=2)
 
-## What is the average daily activity pattern?
+  
+ 
 
+```
 
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
